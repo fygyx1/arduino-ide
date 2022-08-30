@@ -20,6 +20,7 @@ import {
   ZipLibraryInstallRequest,
   LibrarySearchRequest,
   LibrarySearchResponse,
+  LibraryInstallLocation,
 } from './cli-protocol/cc/arduino/cli/commands/v1/lib_pb';
 import { Installable } from '../common/protocol/installable';
 import { ILogger, notEmpty } from '@theia/core';
@@ -194,8 +195,8 @@ export class LibraryServiceImpl
 
   private mapLocation(location: GrpcLibraryLocation): LibraryLocation {
     switch (location) {
-      case GrpcLibraryLocation.LIBRARY_LOCATION_IDE_BUILTIN:
-        return LibraryLocation.IDE_BUILTIN;
+      case GrpcLibraryLocation.LIBRARY_LOCATION_BUILTIN:
+        return LibraryLocation.BUILTIN;
       case GrpcLibraryLocation.LIBRARY_LOCATION_USER:
         return LibraryLocation.USER;
       case GrpcLibraryLocation.LIBRARY_LOCATION_PLATFORM_BUILTIN:
@@ -253,6 +254,7 @@ export class LibraryServiceImpl
     version?: Installable.Version;
     installDependencies?: boolean;
     noOverwrite?: boolean;
+    installLocation?: LibraryLocation.BUILTIN | LibraryLocation.USER;
   }): Promise<void> {
     const item = options.item;
     const version = !!options.version
@@ -267,6 +269,15 @@ export class LibraryServiceImpl
     req.setVersion(version);
     req.setNoDeps(!options.installDependencies);
     req.setNoOverwrite(Boolean(options.noOverwrite));
+    if (options.installLocation === LibraryLocation.BUILTIN) {
+      req.setInstallLocation(
+        LibraryInstallLocation.LIBRARY_INSTALL_LOCATION_BUILTIN
+      );
+    } else if (options.installLocation === LibraryLocation.USER) {
+      req.setInstallLocation(
+        LibraryInstallLocation.LIBRARY_INSTALL_LOCATION_USER
+      );
+    }
 
     console.info('>>> Starting library package installation...', item);
 
